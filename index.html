@@ -1,0 +1,461 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Test Scroll Animation</title>
+  <style>
+    body, html { margin: 0; padding: 0; background: #111; color: white; font-family: sans-serif; }
+    
+    /* Ruang scroll yang sangat panjang agar kita bisa menggulir halaman */
+    #home-scroll {
+      height: 400vh; 
+      position: relative;
+    }
+
+    /* Container yang menempel (sticky) di layar saat digulir */
+    #home-scroll-stage {
+      position: sticky;
+      top: 0;
+      height: 100vh;
+      overflow: hidden;
+      background: #b9b9b9;
+    }
+
+    /* Canvas menutupi seluruh layar */
+    canvas#home-background, img#home-background-fallback {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
+    }
+    
+    .status-panel {
+      position: absolute;
+      top: 20px;
+      left: 20px;
+      background: rgba(0,0,0,0.7);
+      padding: 15px;
+      border-radius: 8px;
+      z-index: 10;
+    }
+  
+    .component-ui { position: absolute; inset: 0; pointer-events: none; display: flex; flex-direction: column; justify-content: space-between; padding: 20px; z-index: 10; transition: opacity 0.5s ease; opacity: 0; }
+    .component-buttons { display: flex; flex-wrap: wrap; gap: 10px; pointer-events: auto; }
+    .component-buttons button { background: rgba(0,0,0,0.7); color: white; border: 1px solid rgba(255,255,255,0.3); padding: 8px 12px; border-radius: 6px; cursor: pointer; transition: 0.2s; }
+    .component-buttons button:hover, .component-buttons button.active { background: #2563eb; border-color: #3b82f6; }
+    .component-info { background: rgba(0,0,0,0.85); padding: 20px; border-radius: 12px; width: min(400px, 100%); align-self: flex-end; margin-top: auto; pointer-events: auto; border: 1px solid rgba(255,255,255,0.2); backdrop-filter: blur(10px); }
+    .info-header { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid rgba(255,255,255,0.2); padding-bottom: 10px; margin-bottom: 10px; }
+    .info-header h2 { margin: 0; font-size: 20px; }
+    .info-header button { background: transparent; border: none; color: white; font-size: 24px; cursor: pointer; padding: 0; line-height: 1; }
+    .component-info p { font-size: 14px; margin: 8px 0; line-height: 1.5; color: #ddd; }
+    .component-info strong { color: white; }
+
+    /* Creator Cards */
+    .creator-cards {
+      position: absolute; inset: 0; z-index: 15; pointer-events: none;
+      display: flex; justify-content: space-between; align-items: center;
+      padding: 40px 60px; transition: opacity 0.5s ease;
+    }
+    .creator-card {
+      background: rgba(0,0,0,0.75); backdrop-filter: blur(12px);
+      border: 1px solid rgba(255,255,255,0.2); border-radius: 16px;
+      padding: 20px; text-align: center; pointer-events: auto;
+      min-width: 160px; box-shadow: 0 8px 24px rgba(0,0,0,0.5);
+    }
+    .creator-card img {
+      width: 80px; height: 80px; border-radius: 8px;
+      object-fit: cover; border: 3px solid rgba(255,255,255,0.3);
+      margin-bottom: 12px; background: #444;
+    }
+    .creator-card h3 { margin: 0; font-size: 18px; color: white; }
+    .creator-card p { margin: 4px 0 0; font-size: 13px; color: #aaa; }
+
+    /* Glitch Button */
+    .glitch-btn {
+      position: relative; display: inline-block; pointer-events: auto;
+      padding: 16px 36px; font-size: 18px; font-weight: 700; letter-spacing: 2px;
+      color: white; background: #000; border: 2px solid #7aa2f7;
+      text-decoration: none; text-transform: uppercase; cursor: pointer;
+      overflow: hidden;
+      box-shadow: 0 0 12px rgba(122,162,247,0.2), inset 0 0 20px rgba(0,0,0,1);
+    }
+    .glitch-btn:hover {
+      background: #0a0a0a;
+      box-shadow: 0 0 20px rgba(122,162,247,0.4), inset 0 0 20px rgba(0,0,0,1);
+    }
+
+    /* Glitch text layers */
+    .glitch-btn::before, .glitch-btn::after {
+      content: attr(data-text); position: absolute; inset: 0;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 18px; font-weight: 700; letter-spacing: 2px; text-transform: uppercase;
+      overflow: hidden; pointer-events: none; opacity: 0; background: #000;
+    }
+    .glitch-btn::before { color: #ff3c78; animation: glitch1 1.5s infinite; }
+    .glitch-btn::after { color: #00e5ff; animation: glitch2 1.5s infinite 0.3s; }
+
+    /* Lightning border flash */
+    .glitch-btn .lightning {
+      position: absolute; inset: -2px; pointer-events: none;
+      border: 2px solid transparent; opacity: 0;
+      animation: lightning-flash 2s infinite;
+      box-shadow: 0 0 12px #7aa2f7, inset 0 0 12px rgba(122,162,247,0.4);
+    }
+
+    /* Spark particles */
+    .glitch-btn .spark {
+      position: absolute; width: 4px; height: 4px; background: white; border-radius: 50%;
+      pointer-events: none; opacity: 0;
+      box-shadow: 0 0 8px 3px rgba(122,162,247,0.9);
+    }
+    .glitch-btn .spark:nth-child(1) { top: -2px; left: 20%; animation: spark 1.2s 0s infinite; }
+    .glitch-btn .spark:nth-child(2) { bottom: -2px; right: 30%; animation: spark 1.2s 0.3s infinite; }
+    .glitch-btn .spark:nth-child(3) { top: 50%; right: -2px; animation: spark 1.2s 0.6s infinite; }
+    .glitch-btn .spark:nth-child(4) { top: 50%; left: -2px; animation: spark 1.2s 0.9s infinite; }
+
+    @keyframes glitch1 {
+      0%, 100% { opacity: 0; }
+      5% { opacity: 1; transform: translate(-4px, 2px); clip-path: inset(15% 0 60% 0); }
+      6% { opacity: 0; }
+      20% { opacity: 0; }
+      21% { opacity: 1; transform: translate(3px, -1px); clip-path: inset(55% 0 15% 0); }
+      23% { opacity: 0; }
+      45% { opacity: 0; }
+      46% { opacity: 0.9; transform: translate(-2px, 0); clip-path: inset(30% 0 40% 0); }
+      48% { opacity: 0; }
+      70% { opacity: 0; }
+      71% { opacity: 1; transform: translate(4px, 1px); clip-path: inset(70% 0 5% 0); }
+      73% { opacity: 0; }
+      90% { opacity: 0; }
+      91% { opacity: 0.7; transform: translate(-3px, -2px); clip-path: inset(5% 0 75% 0); }
+      93% { opacity: 0; }
+    }
+    @keyframes glitch2 {
+      0%, 100% { opacity: 0; }
+      10% { opacity: 0; }
+      11% { opacity: 0.8; transform: translate(4px, -2px); clip-path: inset(40% 0 30% 0); }
+      13% { opacity: 0; }
+      30% { opacity: 0; }
+      31% { opacity: 1; transform: translate(-3px, 1px); clip-path: inset(10% 0 65% 0); }
+      33% { opacity: 0; }
+      55% { opacity: 0; }
+      56% { opacity: 0.7; transform: translate(2px, 2px); clip-path: inset(60% 0 10% 0); }
+      58% { opacity: 0; }
+      78% { opacity: 0; }
+      79% { opacity: 0.9; transform: translate(-4px, 0); clip-path: inset(25% 0 50% 0); }
+      81% { opacity: 0; }
+      95% { opacity: 0; }
+      96% { opacity: 0.6; transform: translate(3px, -1px); clip-path: inset(80% 0 0% 0); }
+      98% { opacity: 0; }
+    }
+    @keyframes lightning-flash {
+      0%, 100% { opacity: 0; border-color: transparent; }
+      18% { opacity: 0; }
+      19% { opacity: 1; border-color: #7aa2f7; }
+      21% { opacity: 0; }
+      22% { opacity: 0.8; border-color: white; }
+      23% { opacity: 0; }
+      55% { opacity: 0; }
+      56% { opacity: 1; border-color: #a0c4ff; }
+      57% { opacity: 0.4; }
+      58% { opacity: 1; border-color: #7aa2f7; }
+      59% { opacity: 0; }
+      85% { opacity: 0; }
+      86% { opacity: 1; border-color: white; }
+      87% { opacity: 0; }
+    }
+    @keyframes spark {
+      0%, 100% { opacity: 0; transform: scale(0); }
+      8% { opacity: 1; transform: scale(2); }
+      16% { opacity: 0; transform: scale(0); }
+    }
+</style>
+</head>
+<body>
+
+  <!-- Ini id="beranda" agar tidak error saat diperiksa oleh JavaScript -->
+  <section id="beranda">
+    <div id="home-scroll">
+      <div id="home-scroll-stage">
+        
+        <!-- Gambar fallback (jika JS gagal) -->
+        <img id="home-background-fallback" src="ezgif-3e0acb79ac1c6e30-jpg/ezgif-frame-001.jpg" alt="Fallback">
+        
+        <!-- Canvas tempat animasi digambar -->
+        <canvas id="home-background"></canvas>
+        
+        <!-- Teks loading -->
+        <p id="home-background-loading" style="position: absolute; z-index: 5; color: black; background: white; padding: 10px;">Menyiapkan...</p>
+        
+        <!-- UI Teks Status -->
+        
+        <!-- UI Komponen -->
+        
+        <!-- Creator Cards -->
+        <div id="creator-cards" class="creator-cards">
+          <div class="creator-card">
+            <img src="https://api.dicebear.com/7.x/initials/svg?seed=D&backgroundColor=3b82f6" alt="Dimas">
+            <h3>Dimas</h3>
+            <p>Creator</p>
+          </div>
+          <a href="materi.html" class="glitch-btn" data-text="Masuk ke Materi">
+            Masuk ke Materi
+            <span class="lightning"></span>
+            <span class="spark"></span>
+            <span class="spark"></span>
+            <span class="spark"></span>
+            <span class="spark"></span>
+          </a>
+          <div class="creator-card">
+            <img src="https://api.dicebear.com/7.x/initials/svg?seed=A&backgroundColor=8b5cf6" alt="Akbar">
+            <h3>Akbar</h3>
+            <p>Creator</p>
+          </div>
+        </div>
+
+        <!-- Judul Utama -->
+        <h1 id="main-title" style="position: absolute; left: 50%; top: 0; transform: translate(-50%, 10vh); color: white; font-size: clamp(24px, 4vw, 48px); font-weight: 800; white-space: nowrap; text-shadow: 0 4px 12px rgba(0,0,0,0.9); z-index: 2; pointer-events: none; margin: 0;">
+          ARSITEKTUR DAN ORGANISASI KOMPUTER
+        </h1>
+
+        <div class="component-ui">
+          <div id="component-buttons" class="component-buttons"></div>
+          <div id="component-info" class="component-info" hidden>
+            <div class="info-header">
+              <h2 id="comp-name">Nama</h2>
+              <button id="comp-close">&times;</button>
+            </div>
+            <p><strong>Fungsi:</strong> <span id="comp-role"></span></p>
+            <p><strong>Hubungan:</strong> <span id="comp-connection"></span></p>
+            <p><strong>Contoh:</strong> <span id="comp-example"></span></p>
+          </div>
+        </div>
+
+
+      </div>
+    </div>
+  </section>
+
+  
+  <script type="module">
+    import { initScrollBackground } from './js/frame-player.js';
+    import { components } from './js/content.js';
+    
+    // Selalu kembali ke frame awal saat refresh
+    if ('scrollRestoration' in history) history.scrollRestoration = 'manual';
+    window.scrollTo(0, 0);
+
+    try {
+      initScrollBackground();
+      
+      const container = document.getElementById('component-buttons');
+      const infoPanel = document.getElementById('component-info');
+
+      
+      
+      const nameEl = document.getElementById('comp-name');
+      const roleEl = document.getElementById('comp-role');
+      const connEl = document.getElementById('comp-connection');
+      const exEl = document.getElementById('comp-example');
+      const closeBtn = document.getElementById('comp-close');
+      
+      
+      const coords = {
+        'Panel kaca': {hx: 8.77, hy: 60.33, tx: 13.03, ty: 79.50},
+        'Cooler / heatsink': {hx: 20.33, hy: 40.17, tx: 21.55, ty: 25.62},
+        'RAM': {hx: 47.70, hy: 36.03, tx: 50.39, ty: 13.55},
+        'GPU': {hx: 32.49, hy: 48.76, tx: 30.00, ty: 75.00},
+        'Motherboard': {hx: 45.61, hy: 63.80, tx: 42.83, ty: 78.18},
+        'CPU': {hx: 40.14, hy: 40.66, tx: 40.40, ty: 16.86},
+        'SSD NVMe': {hx: 51.61, hy: 45.95, tx: 51.61, ty: 77.69},
+        'PSU': {hx: 55.86, hy: 51.74, tx: 60.47, ty: 71.40},
+        'Kabel konektor': {hx: 64.12, hy: 50.41, tx: 58.30, ty: 24.46},
+        'Rangka sasis': {hx: 66.90, hy: 23.31, tx: 63.77, ty: 10.58},
+        'Panel belakang': {hx: 91.14, hy: 53.39, tx: 90.62, ty: 78.35},
+      };
+      const svgOverlay = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+      svgOverlay.style.cssText = 'position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; z-index: 1; filter: drop-shadow(0 2px 4px rgba(0,0,0,0.8)); opacity: 0; transition: opacity 0.5s ease;';
+      document.getElementById('home-scroll-stage').appendChild(svgOverlay);
+
+      // We will create the UI inside component-buttons
+      
+      // Zoom logic
+      const zoomContainer = document.createElement('div');
+      zoomContainer.style.cssText = 'position: absolute; inset: 0; width: 100%; height: 100%; transition: transform 0.6s cubic-bezier(0.25, 1, 0.5, 1); transform-origin: center center;';
+      
+      const stage = document.getElementById('home-scroll-stage');
+      const fallback = document.getElementById('home-background-fallback');
+      const canvas = document.getElementById('home-background');
+      const uiLayer = document.querySelector('.component-ui');
+      
+      
+      
+      // Move elements into zoomContainer
+      stage.insertBefore(zoomContainer, uiLayer);
+      zoomContainer.appendChild(fallback);
+      zoomContainer.appendChild(canvas);
+      zoomContainer.appendChild(svgOverlay);
+      zoomContainer.appendChild(container);
+
+      container.style.cssText = 'position: absolute; inset: 0; pointer-events: none; opacity: 0; transition: opacity 0.5s ease;';
+      
+      
+      // Animasi Scroll (Judul & UI Komponen)
+      const mainTitle = document.getElementById('main-title');
+      const creatorCards = document.getElementById('creator-cards');
+      
+      window.addEventListener('scroll', () => {
+         const section = document.getElementById('home-scroll');
+         const stage = document.getElementById('home-scroll-stage');
+         const top = parseFloat(getComputedStyle(stage).top) || 0;
+         const travel = section.offsetHeight - stage.offsetHeight;
+         const progress = travel <= 0 ? 0 : Math.max(0, Math.min(1, (top - section.getBoundingClientRect().top) / travel));
+         
+         // Gerakkan judul dari 10vh (atas) ke 85vh (bawah)
+         const yPos = 10 + (progress * 75); 
+         const scale = 1 - (progress * 0.4);
+         mainTitle.style.transform = `translate(-50%, ${yPos}vh) scale(${scale})`;
+         
+         // Tampilkan komponen secara bertahap (fade in mulai progress 0.6)
+         const compOpacity = Math.max(0, Math.min(1, (progress - 0.6) / 0.3));
+         uiLayer.style.opacity = compOpacity;
+         svgOverlay.style.opacity = compOpacity;
+         container.style.opacity = compOpacity;
+         
+         // Sembunyikan creator cards saat scroll ke bawah (fade out sebelum 0.3)
+         const creatorOpacity = Math.max(0, Math.min(1, 1 - (progress / 0.25)));
+         creatorCards.style.opacity = creatorOpacity;
+      }, { passive: true });
+
+      components.forEach((comp, idx) => {
+        const pos = coords[comp.name] || {hx: 50, hy: 50, tx: 50, ty: 50};
+        
+        // The Line
+        const line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+        line.setAttribute('x1', pos.tx + '%');
+        line.setAttribute('y1', pos.ty + '%');
+        line.setAttribute('x2', pos.hx + '%');
+        line.setAttribute('y2', pos.hy + '%');
+        line.setAttribute('stroke', 'rgba(255, 255, 255, 0.9)');
+        line.setAttribute('stroke-width', '2');
+        line.setAttribute('stroke-dasharray', '4');
+        svgOverlay.appendChild(line);
+        
+        // The Dot (Hotspot)
+        const dot = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+        dot.setAttribute('cx', pos.hx + '%');
+        dot.setAttribute('cy', pos.hy + '%');
+        dot.setAttribute('r', '4');
+        dot.setAttribute('fill', '#3b82f6');
+        dot.setAttribute('stroke', 'white');
+        dot.setAttribute('stroke-width', '2');
+        svgOverlay.appendChild(dot);
+        
+        // The Floating Button
+        const btnWrapper = document.createElement('div');
+        btnWrapper.style.cssText = `position: absolute; left: ${pos.tx}%; top: ${pos.ty}%; transform: translate(-50%, -50%); pointer-events: auto;`;
+        
+        const btn = document.createElement('button');
+        btn.textContent = comp.name;
+        btn.dataset.index = idx;
+        btn.style.cssText = 'background: rgba(0,0,0,0.8); color: white; border: 1px solid rgba(255,255,255,0.4); padding: 6px 12px; border-radius: 20px; cursor: pointer; white-space: nowrap; font-size: 13px; transition: 0.2s; box-shadow: 0 4px 6px rgba(0,0,0,0.3);';
+        
+        btn.addEventListener('mouseenter', () => {
+          line.setAttribute('stroke', '#3b82f6');
+          line.setAttribute('stroke-width', '2');
+          line.removeAttribute('stroke-dasharray');
+          dot.setAttribute('r', '6');
+        });
+        
+        btn.addEventListener('mouseleave', () => {
+          if (!btn.classList.contains('active')) {
+            line.setAttribute('stroke', 'rgba(255, 255, 255, 0.9)');
+            line.setAttribute('stroke-width', '2');
+            line.setAttribute('stroke-dasharray', '4');
+            dot.setAttribute('r', '4');
+          }
+        });
+
+        btn.addEventListener('click', () => {
+          // Reset all
+          document.querySelectorAll('.component-buttons button').forEach(b => {
+             b.classList.remove('active');
+             b.style.background = 'rgba(0,0,0,0.8)';
+             b.style.borderColor = 'rgba(255,255,255,0.4)';
+          });
+          const allLines = svgOverlay.querySelectorAll('line');
+          const allDots = svgOverlay.querySelectorAll('circle');
+          allLines.forEach(l => {
+             l.setAttribute('stroke', 'rgba(255, 255, 255, 0.4)');
+             l.setAttribute('stroke-width', '1.5');
+             l.setAttribute('stroke-dasharray', '4');
+          });
+          allDots.forEach(d => d.setAttribute('r', '4'));
+          
+          // Highlight active
+          btn.classList.add('active');
+          btn.style.background = '#2563eb';
+          btn.style.borderColor = '#60a5fa';
+          line.setAttribute('stroke', '#60a5fa');
+          line.setAttribute('stroke-width', '2');
+          line.removeAttribute('stroke-dasharray');
+          dot.setAttribute('r', '6');
+          
+          // Show info
+          nameEl.textContent = comp.name;
+          roleEl.textContent = comp.role;
+          connEl.textContent = comp.connection;
+          exEl.textContent = comp.example;
+          infoPanel.hidden = false;
+
+          // Zoom into the component
+          zoomContainer.style.transformOrigin = `${pos.hx}% ${pos.hy}%`;
+          zoomContainer.style.transform = 'scale(1.7)';
+          
+          // Fade out other buttons to focus on the clicked one
+          document.querySelectorAll('.component-buttons > div').forEach((wrapper, i) => {
+             if(i !== idx) { wrapper.style.opacity = '0.15'; wrapper.style.pointerEvents = 'none'; }
+             else { wrapper.style.opacity = '1'; wrapper.style.pointerEvents = 'auto'; }
+          });
+          
+          // Hide all other lines and dots
+          allLines.forEach((l, i) => { if (i !== idx) l.style.opacity = '0'; else l.style.opacity = '1'; });
+          allDots.forEach((d, i) => { if (i !== idx) d.style.opacity = '0'; else d.style.opacity = '1'; });
+
+          
+          // Tidak berpindah frame (hanya zoom)
+        });
+        
+        btnWrapper.appendChild(btn);
+        container.appendChild(btnWrapper);
+      });
+
+      
+
+
+      
+      closeBtn.addEventListener('click', () => {
+        infoPanel.hidden = true;
+        document.querySelectorAll('.component-buttons button').forEach(b => b.classList.remove('active'));
+
+        zoomContainer.style.transform = 'scale(1)';
+        document.querySelectorAll('.component-buttons > div').forEach(wrapper => {
+            wrapper.style.opacity = '1';
+            wrapper.style.pointerEvents = 'auto';
+        });
+        const allLines = svgOverlay.querySelectorAll('line');
+        const allDots = svgOverlay.querySelectorAll('circle');
+        allLines.forEach(l => l.style.opacity = '1');
+        allDots.forEach(d => d.style.opacity = '1');
+
+      });
+      
+    } catch (e) {
+      console.error("Error:", e);
+    }
+  </script>
+
+</body>
+</html>
