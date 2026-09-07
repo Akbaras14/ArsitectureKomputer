@@ -11,6 +11,7 @@ export function createFramePlayer(canvas, fallback, loading) {
   const pending = new Set();
   const failed = new Set();
   let target = 0;
+  let desired = 0;
   let visual = 0;
   let drawn = -1;
   let visible = false;
@@ -36,13 +37,15 @@ export function createFramePlayer(canvas, fallback, loading) {
     fallback.hidden = true;
   }
 
-  /** Ease the displayed frame toward the scroll target so slow scrolls do not snap. */
+  /** Ease both the scroll target and displayed frame so wheel bursts do not snap. */
   function easeToTarget() {
     if (!visible) { easingFrame = 0; return; }
+    const targetDistance = desired - target;
+    target = Math.abs(targetDistance) < 0.35 ? desired : target + targetDistance * 0.11;
     const distance = target - visual;
     visual = Math.abs(distance) < 0.35 ? target : visual + distance * 0.18;
     draw();
-    if (Math.abs(target - visual) >= 0.35) easingFrame = requestAnimationFrame(easeToTarget);
+    if (Math.abs(desired - visual) >= 0.35) easingFrame = requestAnimationFrame(easeToTarget);
     else easingFrame = 0;
   }
 
@@ -64,11 +67,11 @@ export function createFramePlayer(canvas, fallback, loading) {
       image.onload = () => {
         pending.delete(index);
         cache.set(index, image);
-        for (const key of [...cache.keys()].sort((a, b) => Math.abs(b - target) - Math.abs(a - target))) {
+        for (const key of [...cache.keys()].sort((a, b) => Math.abs(b - desired) - Math.abs(a - desired))) {
           if (cache.size <= 16) break;
           if (key !== target && key !== drawn) cache.delete(key);
         }
-        if (index === target || Math.abs(index - visual) < 3) requestAnimationFrame(draw);
+        if (index === target || index === desired || Math.abs(index - visual) < 3) requestAnimationFrame(draw);
         pump();
       };
       image.onerror = () => { pending.delete(index); failed.add(index); if (index === target) reportFailure(); pump(); };
@@ -79,9 +82,9 @@ export function createFramePlayer(canvas, fallback, loading) {
   /** Prioritize the selected frame ahead of nearby images. @param {number} index */
   function select(index) {
     if (!Number.isFinite(index)) return;
-    target = Math.max(0, Math.min(299, Math.round(index)));
-    queue = [0, 1, -1, 2, -2, 3, 4, 5, 6, 7, 8, 9, 10].map(offset => target + offset).filter(frame => frame >= 0 && frame < 300);
-    if (failed.has(target)) reportFailure();
+    desired = Math.max(0, Math.min(299, Math.round(index)));
+    queue = [0, 1, -1, 2, -2, 3, 4, 5, 6, 7, 8, 9, 10].map(offset => desired + offset).filter(frame => frame >= 0 && frame < 300);
+    if (failed.has(desired)) reportFailure();
     pump();
     if (!easingFrame) easingFrame = requestAnimationFrame(easeToTarget);
   }
@@ -99,7 +102,7 @@ export function createFramePlayer(canvas, fallback, loading) {
   /** Suspend loading and drawing while a player is outside the viewport. */
   function setVisible(active) {
     visible = Boolean(active) && !document.hidden;
-    if (visible) { resize(); select(target); }
+    if (visible) { resize(); select(desired); }
     else { queue = []; cancelAnimationFrame(easingFrame); easingFrame = 0; }
   }
 
