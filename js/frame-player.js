@@ -23,7 +23,8 @@ export function createFramePlayer(canvas, fallback, loading) {
     const available = cache.has(frame) ? frame : [...cache.keys()].sort((a, b) => Math.abs(a - frame) - Math.abs(b - frame))[0];
     if (!Number.isInteger(available)) return;
     const image = cache.get(available);
-    const scale = Math.min(canvas.width / image.naturalWidth, canvas.height / image.naturalHeight);
+    // Cover the viewport so the frame is a real background, even when the screen ratio differs.
+    const scale = Math.max(canvas.width / image.naturalWidth, canvas.height / image.naturalHeight);
     const width = image.naturalWidth * scale;
     const height = image.naturalHeight * scale;
     context.fillStyle = '#b9b9b9';
