@@ -16,14 +16,14 @@ export function createFramePlayer(canvas, fallback, loading) {
   let drawn = -1;
   let visible = false;
   let queue = [];
+  let queuedFor = -1;
   let easingFrame = 0;
 
   /** Paint complete frames only, preserving the previous picture while loading. */
   function draw(frame = Math.round(visual)) {
     if (!context || !visible) return;
-    const available = cache.has(frame) ? frame : [...cache.keys()].sort((a, b) => Math.abs(a - frame) - Math.abs(b - frame))[0];
-    if (!Number.isInteger(available)) return;
-    const image = cache.get(available);
+    if (!cache.has(frame)) return;
+    const image = cache.get(frame);
     // Cover the viewport so the frame is a real background, even when the screen ratio differs.
     const scale = Math.max(canvas.width / image.naturalWidth, canvas.height / image.naturalHeight);
     const width = image.naturalWidth * scale;
@@ -31,8 +31,8 @@ export function createFramePlayer(canvas, fallback, loading) {
     context.fillStyle = '#b9b9b9';
     context.fillRect(0, 0, canvas.width, canvas.height);
     context.drawImage(image, (canvas.width - width) / 2, (canvas.height - height) / 2, width, height);
-    drawn = available;
-    canvas.dataset.frame = available;
+    drawn = frame;
+    canvas.dataset.frame = frame;
     loading.hidden = true;
     fallback.hidden = true;
   }
@@ -58,7 +58,7 @@ export function createFramePlayer(canvas, fallback, loading) {
   /** Limit work to three requests and sixteen decoded images per player. */
   function pump() {
     if (!visible || !context) return;
-    while (pending.size < 3 && queue.length) {
+    while (pending.size < 4 && queue.length) {
       const index = queue.shift();
       if (cache.has(index) || pending.has(index) || failed.has(index)) continue;
       pending.add(index);
@@ -83,7 +83,10 @@ export function createFramePlayer(canvas, fallback, loading) {
   function select(index) {
     if (!Number.isFinite(index)) return;
     desired = Math.max(0, Math.min(299, Math.round(index)));
-    queue = [0, 1, -1, 2, -2, 3, 4, 5, 6, 7, 8, 9, 10].map(offset => desired + offset).filter(frame => frame >= 0 && frame < 300);
+    if (Math.abs(desired - queuedFor) >= 3 || queuedFor < 0) {
+      queue = [0, 1, -1, 2, -2, 3, 4, 5, 6, 7, 8, 9, 10].map(offset => desired + offset).filter(frame => frame >= 0 && frame < 300);
+      queuedFor = desired;
+    }
     if (failed.has(desired)) reportFailure();
     pump();
     if (!easingFrame) easingFrame = requestAnimationFrame(easeToTarget);
