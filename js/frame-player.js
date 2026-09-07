@@ -11,24 +11,38 @@ export function createFramePlayer(canvas, fallback, loading) {
   const pending = new Set();
   const failed = new Set();
   let target = 0;
+  let visual = 0;
   let drawn = -1;
   let visible = false;
   let queue = [];
+  let easingFrame = 0;
 
   /** Paint complete frames only, preserving the previous picture while loading. */
-  function draw() {
-    if (!context || !visible || !cache.has(target)) return;
-    const image = cache.get(target);
+  function draw(frame = Math.round(visual)) {
+    if (!context || !visible) return;
+    const available = cache.has(frame) ? frame : [...cache.keys()].sort((a, b) => Math.abs(a - frame) - Math.abs(b - frame))[0];
+    if (!Number.isInteger(available)) return;
+    const image = cache.get(available);
     const scale = Math.min(canvas.width / image.naturalWidth, canvas.height / image.naturalHeight);
     const width = image.naturalWidth * scale;
     const height = image.naturalHeight * scale;
     context.fillStyle = '#b9b9b9';
     context.fillRect(0, 0, canvas.width, canvas.height);
     context.drawImage(image, (canvas.width - width) / 2, (canvas.height - height) / 2, width, height);
-    drawn = target;
-    canvas.dataset.frame = target;
+    drawn = available;
+    canvas.dataset.frame = available;
     loading.hidden = true;
     fallback.hidden = true;
+  }
+
+  /** Ease the displayed frame toward the scroll target so slow scrolls do not snap. */
+  function easeToTarget() {
+    if (!visible) { easingFrame = 0; return; }
+    const distance = target - visual;
+    visual = Math.abs(distance) < 0.35 ? target : visual + distance * 0.18;
+    draw();
+    if (Math.abs(target - visual) >= 0.35) easingFrame = requestAnimationFrame(easeToTarget);
+    else easingFrame = 0;
   }
 
   /** Report missing assets without blocking the rest of the page. */
@@ -53,7 +67,7 @@ export function createFramePlayer(canvas, fallback, loading) {
           if (cache.size <= 16) break;
           if (key !== target && key !== drawn) cache.delete(key);
         }
-        if (index === target) requestAnimationFrame(draw);
+        if (index === target || Math.abs(index - visual) < 3) requestAnimationFrame(draw);
         pump();
       };
       image.onerror = () => { pending.delete(index); failed.add(index); if (index === target) reportFailure(); pump(); };
@@ -65,9 +79,10 @@ export function createFramePlayer(canvas, fallback, loading) {
   function select(index) {
     if (!Number.isFinite(index)) return;
     target = Math.max(0, Math.min(299, Math.round(index)));
-    queue = [0, 1, -1, 2, -2, 3, 4].map(offset => target + offset).filter(frame => frame >= 0 && frame < 300);
+    queue = [0, 1, -1, 2, -2, 3, 4, 5, 6, 7, 8, 9, 10].map(offset => target + offset).filter(frame => frame >= 0 && frame < 300);
     if (failed.has(target)) reportFailure();
-    pump(); draw();
+    pump();
+    if (!easingFrame) easingFrame = requestAnimationFrame(easeToTarget);
   }
 
   /** Match the backing resolution to the canvas layout. */
@@ -84,7 +99,7 @@ export function createFramePlayer(canvas, fallback, loading) {
   function setVisible(active) {
     visible = Boolean(active) && !document.hidden;
     if (visible) { resize(); select(target); }
-    else queue = [];
+    else { queue = []; cancelAnimationFrame(easingFrame); easingFrame = 0; }
   }
 
   new ResizeObserver(resize).observe(canvas);
