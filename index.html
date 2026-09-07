@@ -117,6 +117,8 @@
     .entry-cta { display: flex; flex-direction: column; align-items: center; gap: 11px; pointer-events: none; }
     .entry-cta .glitch-btn { pointer-events: auto; }
     .swipe-hint { color: rgba(255,255,255,.82); font-size: 11px; letter-spacing: 1.2px; text-transform: uppercase; text-shadow: 0 2px 8px rgba(0,0,0,.85); white-space: nowrap; }
+    .swipe-hint::after { content: '↓'; display: block; text-align: center; margin-top: 3px; font-size: 21px; line-height: .8; animation: swipe-arrow-blink .55s steps(2, jump-none) infinite; }
+    @keyframes swipe-arrow-blink { 0%, 45% { opacity: 1; transform: translateY(0); } 46%, 100% { opacity: .15; transform: translateY(3px); } }
 
     @keyframes glitch1 {
       0%, 100% { opacity: 0; }
