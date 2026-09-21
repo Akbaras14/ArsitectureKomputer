@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Eksplorasi GPU 3D</title>
+  <link rel="stylesheet" href="css/component-explorer.css">
+</head>
+<body>
+  <header><a href="index.html">&larr; Kembali ke beranda</a><span>Arsitektur dan Organisasi Komputer</span><a href="materi.html">Semua materi &nearr;</a></header>
+  <main>
+    <div class="heading"><p class="eyebrow">Eksplorasi komponen</p><h1>GPU</h1></div>
+    <section class="scene" aria-label="Model GPU interaktif">
+      <model-viewer id="gpu-model" src="assets/componens/gpu.glb" alt="Model GPU 3D di tengah layar. Putar dengan menyeret atau tombol panah, lalu pilih tombol komponen untuk membaca penjelasan." camera-controls auto-rotate auto-rotate-delay="1000" rotation-per-second="20deg" camera-orbit="25deg 55deg 115%" min-camera-orbit="auto 0deg 65%" max-camera-orbit="auto 180deg 180%" touch-action="pan-y" shadow-intensity="1" exposure="1" loading="eager" interaction-prompt="none">
+        <div class="callout" slot="hotspot-cooler" data-position="0.147m -0.036m -1.459m">
+          <svg width="1" height="1" aria-hidden="true"><line x1="0" y1="0"/><circle r="4"/></svg>
+          <button data-part="0" aria-pressed="false" aria-controls="component-info">Pendingin & Shroud</button>
+        </div>
+        <div class="callout substrate" slot="hotspot-pcb" data-position="0.152m -0.076m -1.361m">
+          <svg width="1" height="1" aria-hidden="true"><line x1="0" y1="0"/><circle r="4"/></svg>
+          <button data-part="1" aria-pressed="false" aria-controls="component-info">PCB & GPU Die</button>
+        </div>
+        <div class="callout bottom" slot="hotspot-pcie" data-position="0.153m -0.133m -1.531m">
+          <svg width="1" height="1" aria-hidden="true"><line x1="0" y1="0"/><circle r="4"/></svg>
+          <button data-part="2" aria-pressed="false" aria-controls="component-info">Konektor PCIe</button>
+        </div>
+      </model-viewer>
+      <p id="model-status" role="status">Memuat model GPU 3D…</p>
+      <p class="gesture">Seret untuk memutar. Scroll atau cubit untuk zoom. Klik nama komponen untuk melihat penjelasan.</p>
+    </section>
+    <aside class="monitor" id="component-info" aria-label="Penjelasan komponen" hidden>
+      <div class="monitor-frame"><div class="screen">
+        <div class="screen-header"><span>gpu@localhost:~ / info</span><button id="close-info" aria-label="Tutup penjelasan">&times;</button></div>
+        <h2 id="part-title"></h2><p id="part-description" aria-hidden="true"></p>
+        <p id="terminal-announcement" class="sr-only" aria-live="polite" aria-atomic="true"></p>
+      </div></div>
+    </aside>
+    <div class="footer"><span>Graphics Processing Unit / Eksplorasi 3D</span><a href="assets/componens/gpu.glb" download>Unduh model GPU</a></div>
+    <noscript><p>Aktifkan JavaScript untuk memutar model. <a href="materi.html">Baca materi GPU</a>.</p></noscript>
+  </main>
+  <script type="application/json" id="component-data">
+[
+  {
+    "title": "Pendingin & Shroud",
+    "orbit": "25deg 30deg 115%",
+    "text": "Pendingin GPU terdiri dari heatsink, heat pipe, dan kipas yang diselubungi shroud. Komponen ini memindahkan panas dari GPU die agar suhu tetap dalam batas operasi. Desain pendingin memengaruhi kinerja dan tingkat kebisingan kartu grafis."
+  },
+  {
+    "title": "PCB & GPU Die",
+    "orbit": "-40deg 65deg 115%",
+    "text": "Printed Circuit Board (PCB) menopang GPU die, chip memori grafis (VRAM), dan rangkaian pengatur daya (VRM). GPU die berisi ribuan unit komputasi yang menjalankan operasi paralel pada piksel, vertex, dan data lainnya. VRAM menyimpan tekstur, framebuffer, dan data kerja GPU."
+  },
+  {
+    "title": "Konektor PCIe",
+    "orbit": "0deg 140deg 115%",
+    "text": "Konektor PCIe di bagian bawah kartu masuk ke slot PCIe pada motherboard. Melalui jalur ini, GPU berkomunikasi dengan CPU dan mengakses memori sistem. Lebar slot, misalnya x16, menentukan jumlah lane yang tersedia untuk transfer data dua arah."
+  }
+]
+  </script>
+  <script type="module" src="js/component-explorer.js"></script>
+</body>
+</html>

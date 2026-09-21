@@ -3,27 +3,27 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Test Scroll Animation</title>
+  <title>Arsitektur dan Organisasi Komputer</title>
   <style>
     body, html { margin: 0; padding: 0; background: #111; color: white; font-family: sans-serif; }
     
-    /* Ruang scroll yang sangat panjang agar kita bisa menggulir halaman */
+    /* Background video memenuhi satu layar. */
     #home-scroll {
-      height: 400vh; 
+      height: 100vh;
+      height: 100dvh;
       position: relative;
     }
 
-    /* Container yang menempel (sticky) di layar saat digulir */
+    /* Panggung video dan label komponen. */
     #home-scroll-stage {
-      position: sticky;
+      position: relative;
       top: 0;
-      height: 100vh;
+      height: 100%;
       overflow: hidden;
       background: #b9b9b9;
     }
 
-    /* Canvas menutupi seluruh layar */
-    canvas#home-background, img#home-background-fallback {
+    video#home-background {
       position: absolute;
       inset: 0;
       width: 100%;
@@ -116,10 +116,11 @@
     .glitch-btn .spark:nth-child(4) { top: 50%; left: -2px; animation: spark 1.2s 0.9s infinite; }
     .entry-cta { display: flex; flex-direction: column; align-items: center; gap: 11px; pointer-events: none; }
     .entry-cta .glitch-btn { pointer-events: auto; }
-    .swipe-hint { display: inline-flex; flex-direction: column; align-items: center; gap: 6px; color: white; text-shadow: 0 2px 8px rgba(0,0,0,.85); white-space: nowrap; }
-    .swipe-label { padding: 4px 10px; border: 1px solid rgba(255,255,255,.95); border-radius: 4px; font-size: 11px; font-weight: 700; letter-spacing: 1.8px; text-transform: uppercase; }
-    .swipe-arrow { display: grid; place-items: center; width: 25px; height: 25px; font-size: 19px; line-height: 1; border: 1px solid rgba(255,255,255,.95); border-radius: 50%; animation: swipe-arrow-blink .55s steps(2, jump-none) infinite; }
-    @keyframes swipe-arrow-blink { 0%, 45% { opacity: 1; transform: translateY(0); } 46%, 100% { opacity: .15; transform: translateY(3px); } }
+    .video-controls { position: absolute; left: 50%; bottom: 24px; transform: translateX(-50%); z-index: 20; text-align: center; }
+    #video-play { min-height: 44px; padding: 10px 24px; border: 1px solid white; border-radius: 6px; background: rgba(0,0,0,.8); color: white; font: inherit; font-weight: 700; cursor: pointer; }
+    #video-play:hover { background: #2563eb; }
+    #video-play:focus-visible { outline: 3px solid #7aa2f7; outline-offset: 4px; }
+    #video-status { margin: 8px 0 0; background: rgba(0,0,0,.8); color: white; font-size: 13px; }
 
     @keyframes glitch1 {
       0%, 100% { opacity: 0; }
@@ -186,14 +187,11 @@
     <div id="home-scroll">
       <div id="home-scroll-stage">
         
-        <!-- Gambar fallback (jika JS gagal) -->
-        <img id="home-background-fallback" src="ezgif-3e0acb79ac1c6e30-jpg/ezgif-frame-001.jpg" alt="Fallback">
-        
-        <!-- Canvas tempat animasi digambar -->
-        <canvas id="home-background"></canvas>
-        
-        <!-- Teks loading -->
-        <p id="home-background-loading" style="position: absolute; z-index: 5; color: black; background: white; padding: 10px;">Menyiapkan...</p>
+        <video id="home-background" src="assets/vidio/backgroundvidio.mp4" poster="ezgif-3e0acb79ac1c6e30-jpg/ezgif-frame-001.jpg" preload="metadata" muted playsinline aria-label="Animasi komponen komputer"></video>
+        <div class="video-controls">
+          <button id="video-play" type="button" aria-controls="home-background">&#9654; Play</button>
+          <p id="video-status" role="status" hidden></p>
+        </div>
         
         <!-- UI Teks Status -->
         
@@ -215,7 +213,6 @@
               <span class="spark"></span>
               <span class="spark"></span>
             </a>
-            <span class="swipe-hint"><span class="swipe-label">Swipe down</span><span class="swipe-arrow" aria-hidden="true">↓</span></span>
           </div>
           <div class="creator-card">
             <img src="https://api.dicebear.com/7.x/initials/svg?seed=A&backgroundColor=8b5cf6" alt="Akbar">
@@ -249,15 +246,11 @@
 
   
   <script type="module">
-    import { initScrollBackground } from './js/frame-player.js';
+    import { initVideoBackground } from './js/video-player.js';
     import { components } from './js/content.js';
     
-    // Selalu kembali ke frame awal saat refresh
-    if ('scrollRestoration' in history) history.scrollRestoration = 'manual';
-    window.scrollTo(0, 0);
-
     try {
-      initScrollBackground();
+      initVideoBackground();
       
       const container = document.getElementById('component-buttons');
       const infoPanel = document.getElementById('component-info');
@@ -295,48 +288,42 @@
       zoomContainer.style.cssText = 'position: absolute; inset: 0; width: 100%; height: 100%; transition: transform 0.6s cubic-bezier(0.25, 1, 0.5, 1); transform-origin: center center;';
       
       const stage = document.getElementById('home-scroll-stage');
-      const fallback = document.getElementById('home-background-fallback');
-      const canvas = document.getElementById('home-background');
+      const video = document.getElementById('home-background');
       const uiLayer = document.querySelector('.component-ui');
       
       
       
       // Move elements into zoomContainer
       stage.insertBefore(zoomContainer, uiLayer);
-      zoomContainer.appendChild(fallback);
-      zoomContainer.appendChild(canvas);
+      zoomContainer.appendChild(video);
       zoomContainer.appendChild(svgOverlay);
       zoomContainer.appendChild(container);
 
       container.style.cssText = 'position: absolute; inset: 0; pointer-events: none; opacity: 0; transition: opacity 0.5s ease;';
       
       
-      // Animasi Scroll (Judul & UI Komponen)
-      const mainTitle = document.getElementById('main-title');
+      // Judul dan label mengikuti progres video.
       const creatorCards = document.getElementById('creator-cards');
       
-      window.addEventListener('scroll', () => {
-         const section = document.getElementById('home-scroll');
-         const stage = document.getElementById('home-scroll-stage');
-         const top = parseFloat(getComputedStyle(stage).top) || 0;
-         const travel = section.offsetHeight - stage.offsetHeight;
-         const progress = travel <= 0 ? 0 : Math.max(0, Math.min(1, (top - section.getBoundingClientRect().top) / travel));
+      video.addEventListener('timeupdate', () => {
+         const progress = Number.isFinite(video.duration) && video.duration > 0 ? video.currentTime / video.duration : 0;
          
-         // Gerakkan judul dari 10vh (atas) ke 85vh (bawah)
-         const yPos = 10 + (progress * 75); 
-         const scale = 1 - (progress * 0.4);
-         mainTitle.style.transform = `translate(-50%, ${yPos}vh) scale(${scale})`;
-         
-         // Tampilkan komponen secara bertahap (fade in mulai progress 0.6)
+         // Tampilkan komponen secara bertahap (fade in mulai progress 0.6).
          const compOpacity = Math.max(0, Math.min(1, (progress - 0.6) / 0.3));
          uiLayer.style.opacity = compOpacity;
          svgOverlay.style.opacity = compOpacity;
          container.style.opacity = compOpacity;
+         container.inert = compOpacity === 0;
+         uiLayer.inert = compOpacity === 0;
          
-         // Sembunyikan creator cards saat scroll ke bawah (fade out sebelum 0.3)
+         // Sembunyikan creator cards saat video berjalan.
          const creatorOpacity = Math.max(0, Math.min(1, 1 - (progress / 0.25)));
          creatorCards.style.opacity = creatorOpacity;
-      }, { passive: true });
+         creatorCards.inert = creatorOpacity === 0;
+         if (progress === 0) closeBtn.click();
+      });
+      container.inert = true;
+      uiLayer.inert = true;
 
       components.forEach((comp, idx) => {
         const pos = coords[comp.name] || {hx: 50, hy: 50, tx: 50, ty: 50};
@@ -366,10 +353,12 @@
         const btnWrapper = document.createElement('div');
         btnWrapper.style.cssText = `position: absolute; left: ${pos.tx}%; top: ${pos.ty}%; transform: translate(-50%, -50%); pointer-events: auto;`;
         
-        const btn = document.createElement('button');
+        const page = { 'CPU': 'cpu.html', 'SSD NVMe': 'ssd.html', 'GPU': 'gpu.html', 'Motherboard': 'motherboard.html', 'RAM': 'ram.html' }[comp.name];
+        const btn = document.createElement(page ? 'a' : 'button');
+        if (page) btn.href = page;
         btn.textContent = comp.name;
         btn.dataset.index = idx;
-        btn.style.cssText = 'background: rgba(0,0,0,0.8); color: white; border: 1px solid rgba(255,255,255,0.4); padding: 6px 12px; border-radius: 20px; cursor: pointer; white-space: nowrap; font-size: 13px; transition: 0.2s; box-shadow: 0 4px 6px rgba(0,0,0,0.3);';
+        btn.style.cssText = 'background: rgba(0,0,0,0.8); color: white; border: 1px solid rgba(255,255,255,0.4); padding: 6px 12px; border-radius: 20px; cursor: pointer; white-space: nowrap; font-size: 13px; text-decoration: none; transition: 0.2s; box-shadow: 0 4px 6px rgba(0,0,0,0.3);';
         
         btn.addEventListener('mouseenter', () => {
           line.setAttribute('stroke', '#3b82f6');
@@ -387,7 +376,7 @@
           }
         });
 
-        btn.addEventListener('click', () => {
+        if (!page) btn.addEventListener('click', () => {
           // Reset all
           document.querySelectorAll('.component-buttons button').forEach(b => {
              b.classList.remove('active');
@@ -434,7 +423,8 @@
           allDots.forEach((d, i) => { if (i !== idx) d.style.opacity = '0'; else d.style.opacity = '1'; });
 
           
-          // Tidak berpindah frame (hanya zoom)
+          // Hentikan video agar komponen tetap terlihat saat diperiksa.
+          video.pause();
         });
         
         btnWrapper.appendChild(btn);

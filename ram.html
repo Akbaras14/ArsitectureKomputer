@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Eksplorasi RAM 3D</title>
+  <link rel="stylesheet" href="css/component-explorer.css">
+</head>
+<body>
+  <header><a href="index.html">&larr; Kembali ke beranda</a><span>Arsitektur dan Organisasi Komputer</span><a href="materi.html">Semua materi &nearr;</a></header>
+  <main>
+    <div class="heading"><p class="eyebrow">Eksplorasi komponen</p><h1>RAM</h1></div>
+    <section class="scene" aria-label="Model RAM interaktif">
+      <model-viewer id="ram-model" src="assets/componens/ram.glb" alt="Model RAM 3D di tengah layar. Putar dengan menyeret atau tombol panah, lalu pilih tombol komponen untuk membaca penjelasan." camera-controls auto-rotate auto-rotate-delay="1000" rotation-per-second="20deg" camera-orbit="20deg 45deg 115%" min-camera-orbit="auto 0deg 65%" max-camera-orbit="auto 180deg 180%" touch-action="pan-y" shadow-intensity="1" exposure="1" loading="eager" interaction-prompt="none">
+        <div class="callout" slot="hotspot-heatspreader" data-position="0m 0.05m 0m">
+          <svg width="1" height="1" aria-hidden="true"><line x1="0" y1="0"/><circle r="4"/></svg>
+          <button data-part="0" aria-pressed="false" aria-controls="component-info">Heat Spreader</button>
+        </div>
+        <div class="callout substrate" slot="hotspot-chip" data-position="0.5m 0.02m 0m">
+          <svg width="1" height="1" aria-hidden="true"><line x1="0" y1="0"/><circle r="4"/></svg>
+          <button data-part="1" aria-pressed="false" aria-controls="component-info">Chip DRAM</button>
+        </div>
+        <div class="callout bottom" slot="hotspot-contact" data-position="0m -0.05m 0m">
+          <svg width="1" height="1" aria-hidden="true"><line x1="0" y1="0"/><circle r="4"/></svg>
+          <button data-part="2" aria-pressed="false" aria-controls="component-info">Kontak pin</button>
+        </div>
+      </model-viewer>
+      <p id="model-status" role="status">Memuat model RAM 3D…</p>
+      <p class="gesture">Seret untuk memutar. Scroll atau cubit untuk zoom. Klik nama komponen untuk melihat penjelasan.</p>
+    </section>
+    <aside class="monitor" id="component-info" aria-label="Penjelasan komponen" hidden>
+      <div class="monitor-frame"><div class="screen">
+        <div class="screen-header"><span>ram@localhost:~ / info</span><button id="close-info" aria-label="Tutup penjelasan">&times;</button></div>
+        <h2 id="part-title"></h2><p id="part-description" aria-hidden="true"></p>
+        <p id="terminal-announcement" class="sr-only" aria-live="polite" aria-atomic="true"></p>
+      </div></div>
+    </aside>
+    <div class="footer"><span>Random Access Memory / Eksplorasi 3D</span><a href="assets/componens/ram.glb" download>Unduh model RAM</a></div>
+    <noscript><p>Aktifkan JavaScript untuk memutar model. <a href="materi.html">Baca materi RAM</a>.</p></noscript>
+  </main>
+  <script type="application/json" id="component-data">
+[
+  {
+    "title": "Heat Spreader",
+    "orbit": "20deg 30deg 115%",
+    "text": "Heat spreader adalah pelat logam yang melapisi chip DRAM untuk menyebarkan dan membuang panas. Pada modul RAM berkecepatan tinggi, heat spreader membantu menjaga suhu agar performa tetap stabil, terutama saat overclocking."
+  },
+  {
+    "title": "Chip DRAM",
+    "orbit": "-30deg 50deg 115%",
+    "text": "Chip DRAM (Dynamic Random Access Memory) menyimpan data dalam kapasitor mikroskopis. Setiap kapasitor mewakili satu bit. Karena muatan kapasitor bocor, data harus di-refresh secara berkala. Modul DIMM umumnya memiliki 8 atau 16 chip DRAM."
+  },
+  {
+    "title": "Kontak pin",
+    "orbit": "0deg 140deg 115%",
+    "text": "Deretan kontak emas di bagian bawah modul masuk ke slot DIMM pada motherboard. Kontak ini menyalurkan data, alamat, sinyal kontrol, dan daya. DDR (Double Data Rate) mentransfer data pada kedua sisi sinyal clock untuk meningkatkan throughput."
+  }
+]
+  </script>
+  <script type="module" src="js/component-explorer.js"></script>
+</body>
+</html>

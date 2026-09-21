@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Eksplorasi SSD 3D</title>
+  <link rel="stylesheet" href="css/component-explorer.css">
+</head>
+<body>
+  <header><a href="index.html">&larr; Kembali ke beranda</a><span>Arsitektur dan Organisasi Komputer</span><a href="materi.html">Semua materi &nearr;</a></header>
+  <main>
+    <div class="heading"><p class="eyebrow">Eksplorasi komponen</p><h1>SSD</h1></div>
+    <section class="scene" aria-label="Model SSD interaktif">
+      <model-viewer id="ssd-model" src="assets/componens/ssd.glb" alt="Model SSD 3D di tengah layar. Putar dengan menyeret atau tombol panah, lalu pilih tombol komponen untuk membaca penjelasan." camera-controls auto-rotate auto-rotate-delay="1000" rotation-per-second="20deg" camera-orbit="20deg 35deg 115%" min-camera-orbit="auto 0deg 65%" max-camera-orbit="auto 180deg 180%" touch-action="pan-y" shadow-intensity="1" exposure="1" loading="eager" interaction-prompt="none">
+        <div class="callout" slot="hotspot-nand" data-position="0m 0.028m 0.6m">
+          <svg width="1" height="1" aria-hidden="true"><line x1="0" y1="0"/><circle r="4"/></svg>
+          <button data-part="0" aria-pressed="false" aria-controls="component-info">Memori NAND</button>
+        </div>
+        <div class="callout substrate" slot="hotspot-board" data-position="0.5m 0.01m 0m">
+          <svg width="1" height="1" aria-hidden="true"><line x1="0" y1="0"/><circle r="4"/></svg>
+          <button data-part="1" aria-pressed="false" aria-controls="component-info">Papan sirkuit</button>
+        </div>
+        <div class="callout bottom" slot="hotspot-connector" data-position="0m 0m 2m">
+          <svg width="1" height="1" aria-hidden="true"><line x1="0" y1="0"/><circle r="4"/></svg>
+          <button data-part="2" aria-pressed="false" aria-controls="component-info">Konektor M.2</button>
+        </div>
+      </model-viewer>
+      <p id="model-status" role="status">Memuat model SSD 3D…</p>
+      <p class="gesture">Seret untuk memutar. Scroll atau cubit untuk zoom. Klik nama komponen untuk melihat penjelasan.</p>
+    </section>
+    <aside class="monitor" id="component-info" aria-label="Penjelasan komponen" hidden>
+      <div class="monitor-frame"><div class="screen">
+        <div class="screen-header"><span>ssd@localhost:~ / info</span><button id="close-info" aria-label="Tutup penjelasan">&times;</button></div>
+        <h2 id="part-title"></h2><p id="part-description" aria-hidden="true"></p>
+        <p id="terminal-announcement" class="sr-only" aria-live="polite" aria-atomic="true"></p>
+      </div></div>
+    </aside>
+    <div class="footer"><span>Solid State Drive / Eksplorasi 3D<br>Model: <a href="https://sketchfab.com/3d-models/m2-ssd-free-9965ed46375b49ee9b6f13c072fb51b4">PolyDavid</a> / <a href="https://creativecommons.org/licenses/by/4.0/">CC BY 4.0</a></span><a href="assets/componens/ssd.glb" download>Unduh model SSD</a></div>
+    <noscript><p>Aktifkan JavaScript untuk memutar model. <a href="materi.html">Baca materi SSD</a>.</p></noscript>
+  </main>
+  <script type="application/json" id="component-data">
+[
+  {
+    "title": "Memori NAND",
+    "orbit": "20deg 35deg 115%",
+    "text": "Chip NAND menyimpan data, aplikasi, dan sistem operasi tanpa membutuhkan daya terus-menerus. SSD menggunakan memori flash, sehingga tidak memerlukan piringan berputar seperti hard disk."
+  },
+  {
+    "title": "Papan sirkuit",
+    "orbit": "-40deg 60deg 115%",
+    "text": "Papan sirkuit menghubungkan chip penyimpanan, pengendali, dan konektor. Pengendali SSD mengatur baca-tulis data, koreksi kesalahan, serta pemerataan penggunaan sel memori."
+  },
+  {
+    "title": "Konektor M.2",
+    "orbit": "0deg 35deg 115%",
+    "text": "Kontak pada ujung modul menghubungkan SSD dengan soket M.2 di motherboard. M.2 adalah bentuk modul dan konektor; dukungan SATA atau PCIe/NVMe bergantung pada SSD serta soket yang digunakan."
+  }
+]
+  </script>
+  <script type="module" src="js/component-explorer.js"></script>
+</body>
+</html>
